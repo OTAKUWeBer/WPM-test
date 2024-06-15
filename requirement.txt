@@ -1,1 +1,1 @@
-pip install windows-curses
+windows-curses
