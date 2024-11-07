@@ -28,15 +28,22 @@ def load_text():
 def wpm_test(stdscr):
     target_text = load_text()
     current_text = []
+    cursor_position = 0  # Keeps track of the current cursor position in the typed text
     wpm = 0
     start_time = time.time()
     stdscr.nodelay(True)
+
+    # Show the cursor at the correct position
+    curses.curs_set(1)  # Make cursor visible
 
     while True:
         time_elapsed = max(time.time() - start_time, 1)
         wpm = round((len(current_text) / (time_elapsed / 60)) / 5)
 
         display_text(stdscr, target_text, current_text, wpm)
+        
+        # Move the cursor to the appropriate position
+        stdscr.move(0, cursor_position)
         stdscr.refresh()
 
         if "".join(current_text) == target_text:
@@ -51,14 +58,22 @@ def wpm_test(stdscr):
         if key == '\x1b':  # Escape key to quit
             break
 
-        if key in ("KEY_BACKSPACE", '\b', "\x7f"):
-            if len(current_text) > 0:
-                current_text.pop()
-        elif len(current_text) < len(target_text):
-            current_text.append(key)
+        if key in ("KEY_BACKSPACE", '\b', "\x7f"):  # Handle backspace
+            if cursor_position > 0:
+                cursor_position -= 1
+                current_text.pop(cursor_position)
+        elif key == "KEY_RIGHT":  # Right arrow key
+            if cursor_position < len(current_text):
+                cursor_position += 1
+        elif key == "KEY_LEFT":  # Left arrow key
+            if cursor_position > 0:
+                cursor_position -= 1
+        elif len(current_text) < len(target_text) and key not in ("KEY_BACKSPACE", "\x1b[C", "\x1b[D"):
+            current_text.insert(cursor_position, key)
+            cursor_position += 1
 
 def main(stdscr):
-    curses.curs_set(0)  # Hide cursor
+    curses.curs_set(0)  # Hide cursor on start
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
 
